@@ -1,0 +1,143 @@
+#!/bin/bash
+
+# Angular Commit Message Validator
+
+commit_msg_file="$1"
+raw_commit_msg=$(cat "$commit_msg_file")
+
+# Extract and clean title line
+title_line=$(echo "$raw_commit_msg" | head -n 1 | sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+
+# Skip automated commits
+if [[ $title_line =~ ^(Merge|Revert) ]] || [[ -z "$title_line" ]]; then
+    exit 0
+fi
+
+# Allowed commit types
+allowed_types=("feat" "fix" "docs" "style" "refactor" "perf" "test" "build" "ci" "chore" "revert")
+
+# Parse commit message components
+parse_commit() {
+    local line=$1
+    local -n type_ref=$2 scope_ref=$3 exclamation_ref=$4 description_ref=$5
+
+     # First match type and separator
+    if [[ "$line" =~ ^([a-z]+)([[:space:]]*)(.*) ]]; then
+        # shellcheck disable=SC2034
+        type_ref=${BASH_REMATCH[1]}
+        local remaining=${BASH_REMATCH[3]}
+
+        # Then match scope (optional) and description
+        pattern="^\$([a-zA-Z0-9_-]+)\$([[:space:]]*)(!?)([[:space:]]*):[[:space:]]*(.*)\$"
+        if [[ "$remaining" =~ $pattern ]]; then
+            # shellcheck disable=SC2034
+            scope_ref="${BASH_REMATCH[1]}"
+            exclamation_ref="${BASH_REMATCH[3]}"
+            description_ref="${BASH_REMATCH[5]}"
+            return 0
+        elif [[ "$remaining" =~ ^!?([[:space:]]*):[[:space:]]*(.*)$ ]]; then
+            # shellcheck disable=SC2034
+            exclamation_ref="${BASH_REMATCH[0]%%:*}"
+            # shellcheck disable=SC2034
+            description_ref="${BASH_REMATCH[2]}"
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
+# Initialize variables
+commit_type=""
+# shellcheck disable=SC2034
+scope=""
+exclamation=""
+description=""
+
+# Validate basic structure
+if ! parse_commit "$title_line" commit_type scope exclamation description; then
+ 	echo "Error: Invalid commit message format" >&2
+    echo "Required format: <type>(<scope>): <description>" >&2
+    echo "Example: feat(core): add new API" >&2
+    echo "Example: fix!: breaking change" >&2
+    exit 1
+fi
+
+# Validate commit type
+valid_type=false
+for t in "${allowed_types[@]}"; do
+    if [[ "$commit_type" == "$t" ]]; then
+        valid_type=true
+        break
+    fi
+done
+
+if ! $valid_type; then
+ 	echo "Error: Invalid type '$commit_type'" >&2
+    echo "Allowed types: ${allowed_types[*]}" >&2
+    exit 1
+fi
+
+# Validate description
+if [[ -z "$description" ]]; then
+	echo "Error: Description cannot be empty" >&2
+    exit 1
+fi
+
+if [[ ${#description} -lt 10 ]]; then
+	echo "Error: Description too short (${#description} chars), minimum 10 required" >&2
+    exit 1
+fi
+
+if [[ "$description" =~ \.$ ]]; then
+	echo "Error: Description should not end with a period" >&2
+	exit 1
+fi
+
+if [[ "${description:0:1}" =~ [[:upper:]] ]]; then
+	echo "Error: Description should start with lowercase letter (found: '${description:0:1}')" >&2
+    exit 1
+fi
+
+# Validate body content
+body=$(echo "$raw_commit_msg" | sed -e '1d' -e '/^[[:space:]]*$/d' -e '/^[[:space:]]*#/d')
+if [[ -n "$body" ]]; then
+    # Check breaking change notation
+    if [[ -n "$exclamation" ]]; then
+        if ! grep -qE '^BREAKING[[:space:]]+CHANGE[[:space:]]*:' <<< "$body"; then
+            echo "Error: Breaking change (!) requires BREAKING CHANGE in body" >&2
+            echo "Format: BREAKING CHANGE: <description>" >&2
+            exit 1
+        fi
+    fi
+
+ 	# Check blank line after header
+    first_body_line=$(echo "$raw_commit_msg" | awk 'NR==2 {print}')
+    if [[ -n "$first_body_line" ]] && ! [[ "$first_body_line" =~ ^[[:space:]]*$ ]]; then
+		echo "Error: Missing blank line between header and body" >&2
+	    exit 1
+    fi
+    # Check line lengths
+    line_count=0
+    while IFS= read -r line; do
+        ((line_count++))
+        [[ $line_count -eq 1 ]] && continue
+        [[ -z "$line" ]] && continue
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+
+        if [[ ${#line} -gt 100 ]]; then
+            echo "Error: Line $((line_count-1)) too long (${#line} > 100 chars)" >&2
+            exit 1
+        fi
+    done <<< "$raw_commit_msg"
+fi
+
+# Validate header length
+if [[ ${#title_line} -gt 72 ]]; then
+    echo "Error: Header too long (${#title_line} > 72 chars)" >&2
+    exit 1
+fi
+
+# Success
+echo "Commit message is valid"
+exit 0
