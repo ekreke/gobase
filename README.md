@@ -13,8 +13,8 @@ gobase 是一个按功能拆分的 Go 通用工具库，
 - maputil   ：通用 map 工具（合并、取值、键值提取、struct <-> map 转换等）
 
 使用方式
-1. 在你的项目中通过 go get 引入 utils 模块：
-   go get github.com/ekreke/gobase/utils@latest
+1. 在你的项目中引入模块：
+   go get github.com/ekreke/gobase@latest
 2. 在 Go 代码中按需导入对应包，例如：
    import "github.com/ekreke/gobase/utils/arrayutil"
    import "github.com/ekreke/gobase/utils/stringutil"
