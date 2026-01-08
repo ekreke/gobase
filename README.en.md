@@ -13,8 +13,8 @@ Main utility packages:
 - maputil   : generic map helpers (merge, get with default, keys/values, struct <-> map)
 
 Usage
-1. Add the utils module to your project with:
-   go get github.com/ekreke/gobase/utils@latest
+1. Add the module to your project with:
+   go get github.com/ekreke/gobase@latest
 2. Import the packages you need in your Go code, for example:
    import "github.com/ekreke/gobase/utils/arrayutil"
    import "github.com/ekreke/gobase/utils/stringutil"
