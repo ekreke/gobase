@@ -1,6 +1,6 @@
 gobase
 
-[English](README.en) | 中文
+[English](README.en.md) | 中文
 
 gobase 是一个按功能拆分的 Go 通用工具库，
 在 utils 目录下提供了一组常用的基础能力，方便在不同项目中复用。
