@@ -1,1 +1,26 @@
-This is a go lib repo for common use
+gobase
+
+[English](README.en) | 中文
+
+gobase 是一个按功能拆分的 Go 通用工具库，
+在 utils 目录下提供了一组常用的基础能力，方便在不同项目中复用。
+
+主要工具包（位于 utils 目录）：
+- arrayutil  ：常用切片/数组操作（差集、并集、子集判断等）
+- stringutil：字符串格式转换、随机字符串等
+- formatutil：进度条等格式化输出
+- osutil    ：进程信息、goroutine ID、默认网络 IP 等 OS 相关工具
+- maputil   ：通用 map 工具（合并、取值、键值提取、struct <-> map 转换等）
+
+使用方式
+1. 在你的项目中通过 go get 引入 utils 模块：
+   go get github.com/ekreke/gobase/utils@latest
+2. 在 Go 代码中按需导入对应包，例如：
+   import "github.com/ekreke/gobase/utils/arrayutil"
+   import "github.com/ekreke/gobase/utils/stringutil"
+   import "github.com/ekreke/gobase/utils/maputil"
+
+在 utils 模块下运行测试：
+cd utils
+go test ./...
+
