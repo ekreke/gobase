@@ -1,6 +1,6 @@
 gobase
 
-English | [中文](README.zh)
+English | [中文](README.md)
 
 gobase is a small collection of reusable Go utilities,
 organized into focused packages under the utils directory.
